@@ -14,7 +14,7 @@ module_defaults = {
 	'description':'My module',
 	'author': 'Your Name',
 	'license' : 'Specify your license',
-	'copyright' : 'Copyright (c) %s by Your Company' % str(date.today().year),
+	'copyright' : 'Copyright (c) {0!s} by Your Company'.format(str(date.today().year)),
 }
 module_license_default = "TODO: place your license here and we'll include it in the module distribution"
 
@@ -29,7 +29,7 @@ def replace_vars(config,token):
 		if idx2 == -1: break
 		key = token[idx+2:idx2]
 		if not config.has_key(key): break
-		token = token.replace('$(%s)' % key, config[key])
+		token = token.replace('$({0!s})'.format(key), config[key])
 		idx = token.find('$(')
 	return token
 
@@ -52,7 +52,7 @@ def generate_doc(config):
 	if not os.path.exists(docdir):
 		docdir = os.path.join(cwd,'..','documentation')
 	if not os.path.exists(docdir):
-		print "Couldn't find documentation file at: %s" % docdir
+		print "Couldn't find documentation file at: {0!s}".format(docdir)
 		return None
 
 	try:
@@ -84,20 +84,20 @@ def compile_js(manifest,config):
 	root_asset, module_assets = compiler.compile_module()
 
 	root_asset_content = """
-%s
+{0!s}
 
 	return filterDataInRange([NSData dataWithBytesNoCopy:data length:sizeof(data) freeWhenDone:NO], ranges[0]);
-""" % root_asset
+""".format(root_asset)
 
 	module_asset_content = """
-%s
+{0!s}
 
 	NSNumber *index = [map objectForKey:path];
-	if (index == nil) {
+	if (index == nil) {{
 		return nil;
-	}
+	}}
 	return filterDataInRange([NSData dataWithBytesNoCopy:data length:sizeof(data) freeWhenDone:NO], ranges[index.integerValue]);
-""" % module_assets
+""".format(module_assets)
 
 	from tools import splice_code
 
@@ -115,7 +115,7 @@ def die(msg):
 	sys.exit(1)
 
 def warn(msg):
-	print "[WARN] %s" % msg
+	print "[WARN] {0!s}".format(msg)
 
 def validate_license():
 	license_file = os.path.join(cwd,'LICENSE')
@@ -129,7 +129,7 @@ def validate_license():
 def validate_manifest():
 	path = os.path.join(cwd,'manifest')
 	f = open(path)
-	if not os.path.exists(path): die("missing %s" % path)
+	if not os.path.exists(path): die("missing {0!s}".format(path))
 	manifest = {}
 	for line in f.readlines():
 		line = line.strip()
@@ -138,11 +138,11 @@ def validate_manifest():
 		key,value = line.split(':')
 		manifest[key.strip()]=value.strip()
 	for key in required_module_keys:
-		if not manifest.has_key(key): die("missing required manifest key '%s'" % key)
+		if not manifest.has_key(key): die("missing required manifest key '{0!s}'".format(key))
 		if module_defaults.has_key(key):
 			defvalue = module_defaults[key]
 			curvalue = manifest[key]
-			if curvalue==defvalue: warn("please update the manifest key: '%s' to a non-default value" % key)
+			if curvalue==defvalue: warn("please update the manifest key: '{0!s}' to a non-default value".format(key))
 	return manifest,path
 
 ignoreFiles = ['.DS_Store','.gitignore','libTitanium.a','titanium.jar','README']
@@ -183,51 +183,51 @@ def build_module(manifest,config):
 	moduleid = manifest['moduleid']
 	libpaths = ''
 	for libfile in glob_libfiles():
-		libpaths+='%s ' % libfile
+		libpaths+='{0!s} '.format(libfile)
 
-	os.system("lipo %s -create -output build/lib%s.a" %(libpaths,moduleid))
+	os.system("lipo {0!s} -create -output build/lib{1!s}.a".format(libpaths, moduleid))
 
 def package_module(manifest,mf,config):
 	name = manifest['name'].lower()
 	moduleid = manifest['moduleid'].lower()
 	version = manifest['version']
-	modulezip = '%s-iphone-%s.zip' % (moduleid,version)
+	modulezip = '{0!s}-iphone-{1!s}.zip'.format(moduleid, version)
 	if os.path.exists(modulezip): os.remove(modulezip)
 	zf = zipfile.ZipFile(modulezip, 'w', zipfile.ZIP_DEFLATED)
-	modulepath = 'modules/iphone/%s/%s' % (moduleid,version)
-	zf.write(mf,'%s/manifest' % modulepath)
-	libname = 'lib%s.a' % moduleid
-	zf.write('build/%s' % libname, '%s/%s' % (modulepath,libname))
+	modulepath = 'modules/iphone/{0!s}/{1!s}'.format(moduleid, version)
+	zf.write(mf,'{0!s}/manifest'.format(modulepath))
+	libname = 'lib{0!s}.a'.format(moduleid)
+	zf.write('build/{0!s}'.format(libname), '{0!s}/{1!s}'.format(modulepath, libname))
 	docs = generate_doc(config)
 	if docs!=None:
 		for doc in docs:
 			for file, html in doc.iteritems():
 				filename = string.replace(file,'.md','.html')
-				zf.writestr('%s/documentation/%s'%(modulepath,filename),html)
+				zf.writestr('{0!s}/documentation/{1!s}'.format(modulepath, filename),html)
 
 	p = os.path.join(cwd, 'assets')
 	if not os.path.exists(p):
 		p = os.path.join(cwd, '..', 'assets')
 	if os.path.exists(p):
-		zip_dir(zf,p,'%s/%s' % (modulepath,'assets'),['README'])
+		zip_dir(zf,p,'{0!s}/{1!s}'.format(modulepath, 'assets'),['README'])
 
 	for dn in ('example','platform'):
 		p = os.path.join(cwd, dn)
 		if not os.path.exists(p):
 			p = os.path.join(cwd, '..', dn)
 		if os.path.exists(p):
-			zip_dir(zf,p,'%s/%s' % (modulepath,dn),['README'],True)
+			zip_dir(zf,p,'{0!s}/{1!s}'.format(modulepath, dn),['README'],True)
 
 	license_file = os.path.join(cwd,'LICENSE')
 	if not os.path.exists(license_file):
 		license_file = os.path.join(cwd,'..','LICENSE')
 	if os.path.exists(license_file):
-		zf.write(license_file,'%s/LICENSE' % modulepath)
+		zf.write(license_file,'{0!s}/LICENSE'.format(modulepath))
 
-	zf.write('module.xcconfig','%s/module.xcconfig' % modulepath)
+	zf.write('module.xcconfig','{0!s}/module.xcconfig'.format(modulepath))
 	exports_file = 'metadata.json'
 	if os.path.exists(exports_file):
-		zf.write(exports_file, '%s/%s' % (modulepath, exports_file))
+		zf.write(exports_file, '{0!s}/{1!s}'.format(modulepath, exports_file))
 	zf.close()
 
 
