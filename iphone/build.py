@@ -148,7 +148,9 @@ def validate_manifest():
 ignoreFiles = ['.DS_Store','.gitignore','libTitanium.a','titanium.jar','README']
 ignoreDirs = ['.DS_Store','.svn','.git','CVSROOT']
 
-def zip_dir(zf,dir,basepath,ignore=[],includeJSFiles=False):
+def zip_dir(zf,dir,basepath,ignore=None,includeJSFiles=False):
+	if ignore is None:
+		ignore = []
 	for root, dirs, files in os.walk(dir):
 		for name in ignoreDirs:
 			if name in dirs:
