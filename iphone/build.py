@@ -201,7 +201,7 @@ def package_module(manifest,mf,config):
 	libname = 'lib%s.a' % moduleid
 	zf.write('build/%s' % libname, '%s/%s' % (modulepath,libname))
 	docs = generate_doc(config)
-	if docs!=None:
+	if docsis notNone:
 		for doc in docs:
 			for file, html in doc.iteritems():
 				filename = string.replace(file,'.md','.html')
